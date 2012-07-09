@@ -27,13 +27,13 @@ class JSONIntruderMenu(MenuItem):
             body.write(request.raw.split('\r\n\r\n', 1)[0])
             body.write('\r\n\r\n')
 
-            print 'blah'
-
             try:
-                message, offsets = encode(body, json.loads(request.body))
+                json_obj = json.loads(request.body)
+                message, offsets = getJsonInsertionPointOffsets(body, json_obj)
             except Exception:
                 self.log.exception('Error decoding json body: %r',
                     request.body)
+                continue
 
             self.burp.sendToIntruder(
                 request.host, request.port, request.is_secure,
@@ -57,10 +57,12 @@ class JSONActiveScannerMenu(MenuItem):
             body.write('\r\n\r\n')
 
             try:
-                message, offsets = encode(body, json.loads(request.body))
+                json_obj = json.loads(request.body)
+                message, offsets = getJsonInsertionPointOffsets(body, json_obj)
             except Exception:
                 self.log.exception('Error decoding json body: %r',
                     request.body)
+                continue
 
             self.burp.doActiveScan(
                 request.host, request.port, request.is_secure,
@@ -69,7 +71,7 @@ class JSONActiveScannerMenu(MenuItem):
         return
 
 
-def encode(fileobj, jsonobj):
+def getJsonInsertionPointOffsets(fileobj, jsonobj):
     offsets = []
 
     dict_level = 0
