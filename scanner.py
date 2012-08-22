@@ -32,6 +32,6 @@ class UnhandledExceptionLogger(Component):
         return
 
     def processResponse(self, request):
-        if request.status_code >= 500:
+        if request.response.status_code >= 500:
             self.write(request.host, request.raw)
             self.write(request.host, request.response.raw)
