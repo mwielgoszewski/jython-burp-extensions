@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-from gds.burp.api import IScannerRequestHandler, IScannerResponseHandler
+from gds.burp.api import *
 from gds.burp.core import Component, implements
 
-class ScannerLogger(Component):
-    implements(IScannerRequestHandler, IScannerResponseHandler)
+class UnhandledExceptionLogger(Component):
+    '''
+    This plugin logs all 500-level HTTP internal server errors to a
+    host-specific log file.
+    '''
+    implements(IIntruderResponseHandler, IProxyResponseHandler,
+               IRepeaterResponseHandler, IScannerResponseHandler)
 
     def __init__(self):
         self.logfiles = {}
@@ -15,15 +20,18 @@ class ScannerLogger(Component):
             except Exception:
                 pass
 
+    def _open_logfile(self, hostname)
+        return open('%s-errors.log' % (hostname,), 'ab')
+
     def write(self, host, data):
-        of = self.logfiles.setdefault(host, open('%s-scanner.log' % (host,), 'ab'))
-        of.write('=======================================================\n\n')
+        of = self.logfiles.setdefault(host, self._open_logfile(host))
+
+        of.write('\n=======================================================\n')
         of.write(data)
         of.write('\n=======================================================\n\n')
         return
 
-    def processRequest(self, request):
-        self.write(request.host, request.raw)
-
     def processResponse(self, request):
-        self.write(request.host, request.response.raw)
+        if request.status_code >= 500:
+            self.write(request.host, request.raw)
+            self.write(request.host, request.response.raw)
